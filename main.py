@@ -7,15 +7,15 @@
 #
 #-------------------------------------------------------------------------------
 from __future__ import division
-from Tkinter import *
-import tkMessageBox
+from tkinter import *
+from tkinter import messagebox as tkMessageBox
 from PIL import Image, ImageTk
 import os
 import sys
 import glob
 import random
 
-MAIN_COLORS = ['darkolivegreen', 'darkseagreen', 'darkorange', 'darkslategrey', 'darkturquoise', 'darkgreen', 'darkviolet', 'darkgray', 'darkmagenta', 'darkblue', 'darkkhaki','darkcyan', 'darkred',  'darksalmon', 'darkslategray', 'darkgoldenrod', 'darkgrey', 'darkslateblue', 'darkorchid','skyblue','yellow','orange','red','pink','violet','green','brown','gold','Olive','Maroon', 'blue', 'cyan', 'black','olivedrab', 'lightcyan', 'silver']
+MAIN_COLORS = ['darkolivegreen', 'darkseagreen', 'darkorange', 'darkslategrey', 'darkturquoise', 'darkgreen', 'darkviolet', 'darkgray', 'darkmagenta', 'darkblue', 'darkkhaki','darkcyan', 'darkred',  'darksalmon', 'darkslategray', 'darkgoldenrod', 'darkgrey', 'darkslateblue', 'darkorchid','skyblue','yellow','orange','red','pink','violet','green','brown','gold','Maroon', 'blue', 'cyan', 'black','olivedrab', 'lightcyan']
 
 # image sizes for the examples
 SIZE = 256, 256
@@ -29,7 +29,8 @@ try:
 except IOError as io:
     print("[ERROR] Please create classes.txt and put your all classes")
     sys.exit(1)
-COLORS = random.sample(set(MAIN_COLORS), len(classes))
+    
+COLORS = random.choices(MAIN_COLORS, k=len(classes))
 
 class LabelTool():
     def __init__(self, master):
@@ -63,6 +64,7 @@ class LabelTool():
 
         # reference to bbox
         self.bboxIdList = []
+        self.textIdList = []
         self.bboxId = None
         self.bboxList = []
         self.bboxListCls = []
@@ -157,9 +159,9 @@ class LabelTool():
            return
         # get image list
         self.imageDir = os.path.join(r'./Images', '%s' %(self.category))
-        self.imageList = glob.glob(os.path.join(self.imageDir, '*.jpg'))
+        self.imageList = glob.glob(os.path.join(self.imageDir, '*.bmp')) + glob.glob(os.path.join(self.imageDir, '*.jpg'))
         if len(self.imageList) == 0:
-            print 'No .jpg images found in the specified dir!'
+            print('No .jpg images found in the specified dir!')
             tkMessageBox.showerror("Error!", message = "No .jpg images found in the specified dir!")
             return
 
@@ -174,7 +176,7 @@ class LabelTool():
         if not os.path.exists(self.outDir):
             os.mkdir(self.outDir)
         self.loadImage()
-        print '%d images loaded from %s' %(self.total, s)
+        print('%d images loaded from %s' %(self.total, s))
 
     def loadImage(self):
         # load image
@@ -202,9 +204,12 @@ class LabelTool():
                     self.bboxListCls.append(yolo_data[0])
                     tmpId = self.mainPanel.create_rectangle(tmp[0], tmp[1], \
                                                             tmp[2], tmp[3], \
-                                                            width = 2, \
+                                                            width = 1, \
                                                             outline = COLORS[int(yolo_data[0])])
                     self.bboxIdList.append(tmpId)
+                    tmpId = self.mainPanel.create_text(tmp[0]+3, tmp[1]-5, fill="red", font="calibri 11 bold", 
+                        text=classes[int(yolo_data[0])])
+                    self.textIdList.append(tmpId)
                     self.listbox.insert(END, '(%d, %d) -> (%d, %d) -> (%s)' %(tmp[0], tmp[1], tmp[2], tmp[3], classes[int(yolo_data[0])]))
                     self.listbox.itemconfig(len(self.bboxIdList) - 1, fg = COLORS[int(yolo_data[0])])
         
@@ -215,7 +220,7 @@ class LabelTool():
                 b = (float(xmin), float(xmax), float(ymin), float(ymax))
                 bb = self.convert((self.curimg_w,self.curimg_h), b)
                 f.write(str(bboxcls) + " " + " ".join([str(a) for a in bb]) + '\n')
-        print 'Image No. %d saved' %(self.cur)
+        print('Image No. %d saved' %(self.cur))
 
 
     def mouseClick(self, event):
@@ -228,6 +233,8 @@ class LabelTool():
             self.bboxListCls.append(self.cur_cls_id)
             self.bboxIdList.append(self.bboxId)
             self.bboxId = None
+            self.textIdList.append(self.mainPanel.create_text(x1+3, y1-5, fill="red", font="calibri 11 bold", 
+                text=classes[self.cur_cls_id]))
             self.listbox.insert(END, '(%d, %d) -> (%d, %d) -> (%s)' %(x1, y1, x2, y2, classes[self.cur_cls_id]))
             self.listbox.itemconfig(len(self.bboxIdList) - 1, fg = COLORS[self.cur_cls_id])
         self.STATE['click'] = 1 - self.STATE['click']
@@ -237,16 +244,16 @@ class LabelTool():
         if self.tkimg:
             if self.hl:
                 self.mainPanel.delete(self.hl)
-            self.hl = self.mainPanel.create_line(0, event.y, self.tkimg.width(), event.y, width = 2)
+            self.hl = self.mainPanel.create_line(0, event.y, self.tkimg.width(), event.y, width = 1)
             if self.vl:
                 self.mainPanel.delete(self.vl)
-            self.vl = self.mainPanel.create_line(event.x, 0, event.x, self.tkimg.height(), width = 2)
+            self.vl = self.mainPanel.create_line(event.x, 0, event.x, self.tkimg.height(), width = 1)
         if 1 == self.STATE['click']:
             if self.bboxId:
                 self.mainPanel.delete(self.bboxId)
             self.bboxId = self.mainPanel.create_rectangle(self.STATE['x'], self.STATE['y'], \
                                                             event.x, event.y, \
-                                                            width = 2, \
+                                                            width = 1, \
                                                             outline = COLORS[self.cur_cls_id])
 
     def cancelBBox(self, event):
@@ -262,7 +269,9 @@ class LabelTool():
             return
         idx = int(sel[0])
         self.mainPanel.delete(self.bboxIdList[idx])
+        self.mainPanel.delete(self.textIdList[idx])
         self.bboxIdList.pop(idx)
+        self.textIdList.pop(idx)
         self.bboxList.pop(idx)
         print(self.bboxListCls,idx)
         self.bboxListCls.pop(idx)
@@ -271,7 +280,10 @@ class LabelTool():
     def clearBBox(self):
         for idx in range(len(self.bboxIdList)):
             self.mainPanel.delete(self.bboxIdList[idx])
+        for idx in range(len(self.textIdList)):
+            self.mainPanel.delete(self.textIdList[idx])
         self.listbox.delete(0, len(self.bboxList))
+        self.textIdList = []
         self.bboxIdList = []
         self.bboxList = []
         self.bboxListCls = []
