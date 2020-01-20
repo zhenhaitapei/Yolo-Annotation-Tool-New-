@@ -1,2 +1,1 @@
-cat
-dog
+classes-taicon_capacitor_surface_text.txt
